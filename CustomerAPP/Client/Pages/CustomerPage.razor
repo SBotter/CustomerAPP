@@ -1,0 +1,82 @@
+﻿@page "/customer"
+@page "/customer/{id:int}"
+@inject ICustomerService CustomerService
+
+@if(Id == null)
+{
+    <PageTitle>Create a new Customer</PageTitle>
+    <h3>Create a new Customer</h3>
+}
+else
+{
+    <PageTitle>Edit Customer - @customer.FirstName @customer.LastName</PageTitle>
+    <h3>Edit Customer - @customer.FirstName @customer.LastName</h3>
+}
+
+<EditForm Model="customer" OnSubmit="HandleSubmit">
+    <div>
+        
+        <label>Company</label>
+        <InputSelect @bind-Value="customer.CompanyId" class="form-select">
+            @foreach(var company in CustomerService.Companies)
+            {
+                <option value="@company.CompanyId">@company.CompanyName</option>
+            }
+        </InputSelect>
+        <label for="firstname">First Name</label>
+        <InputText id="firstname" @bind-Value="customer.FirstName" class="form-control"></InputText>
+        <label for="lastname">Last Name</label>
+        <InputText id="lastname" @bind-Value="customer.LastName" class="form-control"></InputText>
+        <label for="email">Contato</label>
+        <InputText id="email" @bind-Value="customer.Email" class="form-control"></InputText>
+    </div>
+    <br />
+    <button type="submit" class="btn btn-primary">@btnText</button>
+    <button type="button" class="btn btn-danger" @onclick="DeleteCustomer">Delete Customer</button>
+</EditForm> 
+
+@code {
+    [Parameter]
+    public int? Id { get; set; }
+    string btnText = string.Empty;
+
+    Customer customer = new Customer { Company = new Company() };
+
+    protected override async Task OnInitializedAsync()
+    {
+        btnText = Id == null ? "Save New Customer" : "Update Customer";
+        await CustomerService.GetCompanies();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if(Id == null)
+        {
+            customer.Company = CustomerService.Companies[0];
+            customer.CompanyId = customer.Company.CompanyId;
+
+        }
+        else
+        {
+            customer = await CustomerService.GetSingleCustomer((int)Id);
+        }
+    }
+
+    async Task HandleSubmit()
+    {
+        if(Id == null)
+        {
+            await CustomerService.CreateCustomer(customer);
+        }
+        else
+        {
+            await CustomerService.UpdateCustomer(customer);
+        }
+    }
+
+    async Task DeleteCustomer()
+    {
+        await CustomerService.DeleteCustomer(customer.Id);
+    }
+}
+ 

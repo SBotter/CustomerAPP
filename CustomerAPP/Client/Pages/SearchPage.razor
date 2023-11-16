@@ -1,0 +1,82 @@
+﻿@page "/search"
+@inject ICustomerIndex CustomerIndex
+@inject ICustomerService CustomerService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Search Tool</PageTitle>
+
+<h3>Search Tool</h3>
+
+<div>
+    <label for="search">Search</label>
+    <input type="text" class="form-control" id="search" @bind="searchQuery" />
+</div>
+
+<br />
+
+<button type="button" class="btn btn-outline-success my-2 my-sm-0" @onclick="Search">Search</button>
+
+<br />
+
+@if(showResult && searchResult.Count > 0)
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>First Name</th>
+                <th>Last Name</th>
+                <th>Contact</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var customer in searchResult)
+            {
+                <tr>
+                    <td>@customer.FirstName</td>
+                    <td>@customer.LastName</td>
+                    <td>@customer.Email</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else if (showResult && searchResult.Count == 0)
+{
+    <br />
+
+    <div class="alert alert-danger" role="alert">
+        No results found!
+    </div>
+}
+
+
+@code {
+    private string searchQuery;
+
+    private List<Customer> searchResult = new List<Customer>();
+
+    private bool showResult = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CustomerService.GetCustomers();
+    }
+
+    private void Search()
+    {
+        List<Customer> customers = new List<Customer>();
+
+        foreach (var customer in CustomerService.Customers)
+        {
+            customers.Add(customer);    
+        }
+        var index = new CustomerIndex();
+        index.AddCustomerToIndex(customers);
+
+        searchResult = index.Search(searchQuery);
+        if(searchResult.Count > 0)
+        { 
+            showResult = true;
+        }
+    }
+}
